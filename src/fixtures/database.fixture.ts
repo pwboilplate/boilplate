@@ -143,10 +143,11 @@ async function createMysqlClient(config: DatabaseFixtureConfig): Promise<Databas
     return {
         async query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]> {
             try {
+                const normalized = normalizePositionalParams(sql, params);
                 const connection = await pool.getConnection();
                 try {
                     await connection.query(`SET SESSION MAX_EXECUTION_TIME = ${queryTimeout}`);
-                    const [rows] = await connection.query(sql, params);
+                    const [rows] = await connection.query(normalized.sql, normalized.params);
                     return rows as T[];
                 } finally {
                     connection.release();
@@ -163,10 +164,11 @@ async function createMysqlClient(config: DatabaseFixtureConfig): Promise<Databas
 
         async execute(sql: string, params?: unknown[]): Promise<{ affectedRows: number }> {
             try {
+                const normalized = normalizePositionalParams(sql, params);
                 const connection = await pool.getConnection();
                 try {
                     await connection.query(`SET SESSION MAX_EXECUTION_TIME = ${queryTimeout}`);
-                    const [result] = await connection.query(sql, params);
+                    const [result] = await connection.query(normalized.sql, normalized.params);
                     const affectedRows = (result as { affectedRows?: number }).affectedRows ?? 0;
                     return { affectedRows };
                 } finally {
@@ -186,6 +188,31 @@ async function createMysqlClient(config: DatabaseFixtureConfig): Promise<Databas
             await pool.end();
         },
     };
+}
+
+/**
+ * Converts PostgreSQL-style positional parameters ($1, $2, ...) to question-mark style (?)
+ * used by MySQL and SQLite. Optionally normalizes parameter values (e.g., booleans to integers)
+ * for drivers that don't support boolean binding.
+ */
+function normalizePositionalParams(
+    sql: string,
+    params?: unknown[],
+    options?: { convertBooleans?: boolean },
+): { sql: string; params: unknown[] } {
+    // Replace $1, $2, ... with ?
+    const normalizedSql = sql.replace(/\$(\d+)/g, '?');
+
+    let normalizedParams = params ?? [];
+
+    if (options?.convertBooleans) {
+        normalizedParams = normalizedParams.map((p) => {
+            if (typeof p === 'boolean') return p ? 1 : 0;
+            return p;
+        });
+    }
+
+    return { sql: normalizedSql, params: normalizedParams };
 }
 
 /**
@@ -217,8 +244,9 @@ async function createSqliteClient(config: DatabaseFixtureConfig): Promise<Databa
         async query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]> {
             try {
                 db.pragma(`busy_timeout = ${queryTimeout}`);
-                const stmt = db.prepare(sql);
-                const rows = params && params.length > 0 ? stmt.all(...params) : stmt.all();
+                const normalized = normalizePositionalParams(sql, params, { convertBooleans: true });
+                const stmt = db.prepare(normalized.sql);
+                const rows = normalized.params.length > 0 ? stmt.all(...normalized.params) : stmt.all();
                 return rows as T[];
             } catch (error) {
                 throw new FixtureOperationError('database', 'query', {
@@ -232,8 +260,9 @@ async function createSqliteClient(config: DatabaseFixtureConfig): Promise<Databa
         async execute(sql: string, params?: unknown[]): Promise<{ affectedRows: number }> {
             try {
                 db.pragma(`busy_timeout = ${queryTimeout}`);
-                const stmt = db.prepare(sql);
-                const result = params && params.length > 0 ? stmt.run(...params) : stmt.run();
+                const normalized = normalizePositionalParams(sql, params, { convertBooleans: true });
+                const stmt = db.prepare(normalized.sql);
+                const result = normalized.params.length > 0 ? stmt.run(...normalized.params) : stmt.run();
                 return { affectedRows: result.changes };
             } catch (error) {
                 throw new FixtureOperationError('database', 'query', {
@@ -254,7 +283,9 @@ async function createSqliteClient(config: DatabaseFixtureConfig): Promise<Databa
  * Creates a MSSQL database client using the `mssql` library.
  */
 async function createMssqlClient(config: DatabaseFixtureConfig): Promise<DatabaseClient> {
-    const mssql = await import('mssql');
+    const mssqlModule = await import('mssql');
+    // Handle ESM/CJS interop — ConnectionPool may be on default export or top-level
+    const mssql = (mssqlModule as { default?: typeof mssqlModule }).default ?? mssqlModule;
 
     const connectionTimeout = config.connectionTimeout ?? DEFAULT_CONNECTION_TIMEOUT;
     const queryTimeout = config.queryTimeout ?? DEFAULT_QUERY_TIMEOUT;
