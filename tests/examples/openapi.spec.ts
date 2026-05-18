@@ -30,23 +30,24 @@ test.describe('OpenAPI Fixture Examples', () => {
         const { client } = openApiClient;
 
         // Call an operation defined in the OpenAPI spec by its operationId.
-        // The Petstore spec defines: operationId: "findPetsByStatus"
-        const response = await (client as any).findPetsByStatus(null, null, {
-            params: { status: 'available' },
+        // The Petstore spec defines: operationId: "getInventory" (requires api_key header)
+        const response = await (client as any).getInventory(null, null, {
+            headers: { api_key: 'special-key' },
         });
 
-        // Validate the response
+        // Validate the response — getInventory returns a map of status to count
         expect(response.status).toBe(200);
         expect(response.data).toBeDefined();
-        expect(Array.isArray(response.data)).toBe(true);
+        expect(typeof response.data).toBe('object');
     });
 
     test('call operation with parameters', async ({ openApiClient }) => {
         const { client } = openApiClient;
 
         // Operations with path parameters pass them as the first argument.
-        // The Petstore spec defines: operationId: "getPetById" with path param {petId}
-        const response = await (client as any).getPetById({ petId: 1 });
+        // The Petstore spec defines: operationId: "getOrderById" with path param {orderId}
+        // This endpoint has no security requirement.
+        const response = await (client as any).getOrderById({ orderId: 1 });
 
         expect(response.status).toBe(200);
         expect(response.data).toBeDefined();
@@ -57,17 +58,18 @@ test.describe('OpenAPI Fixture Examples', () => {
         const { client } = openApiClient;
 
         // POST operations pass the request body as the second argument.
-        // The Petstore spec defines: operationId: "addPet"
-        const response = await (client as any).addPet(null, {
-            name: 'TestPet',
-            photoUrls: ['https://example.com/photo.jpg'],
-            status: 'available',
+        // The Petstore spec defines: operationId: "placeOrder" (no security requirement)
+        const response = await (client as any).placeOrder(null, {
+            petId: 1,
+            quantity: 1,
+            status: 'placed',
+            complete: true,
         });
 
-        // addPet returns 200 on success per the Petstore spec mock
+        // placeOrder returns 200 on success per the Petstore spec
         expect(response.status).toBe(200);
         expect(response.data).toBeDefined();
-        expect(response.data.name).toBe('TestPet');
+        expect(response.data.petId).toBe(1);
     });
 
     test('access the underlying OpenAPIClientAxios instance', async ({ openApiClient }) => {
