@@ -1,19 +1,50 @@
 {
-    "name": "playwright-framework",
+    "name": "@inluxc/stagehand",
     "version": "1.0.0",
-    "description": "Reusable Playwright test framework template with extensible fixture architecture for API and integration testing",
-    "main": "src/index.ts",
+    "description": "Extensible fixture toolkit for Playwright Test — adds OpenAPI, database, Kafka, Redis, mobile, and OTP fixtures on top of @playwright/test",
+    "main": "./dist/src/index.js",
+    "module": "./dist/src/index.js",
+    "types": "./dist/src/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/src/index.d.ts",
+            "import": "./dist/src/index.js",
+            "default": "./dist/src/index.js"
+        },
+        "./config": {
+            "types": "./dist/src/config/index.d.ts",
+            "import": "./dist/src/config/index.js"
+        },
+        "./fixtures": {
+            "types": "./dist/src/fixtures/index.d.ts",
+            "import": "./dist/src/fixtures/index.js"
+        },
+        "./secrets": {
+            "types": "./dist/src/secrets/index.d.ts",
+            "import": "./dist/src/secrets/index.js"
+        },
+        "./errors": {
+            "types": "./dist/src/errors.d.ts",
+            "import": "./dist/src/errors.js"
+        }
+    },
+    "files": [
+        "dist/src",
+        "README.md",
+        "LICENSE",
+        "environments.json"
+    ],
     "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "prepublishOnly": "npm run build",
         "test": "npx playwright test",
         "test:tag": "npx playwright test --grep",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "@mobilewright/test": "^0.0.35",
-        "@playwright/test": "^1.52.0",
         "better-sqlite3": "^11.6.0",
         "dotenv": "^16.4.5",
-        "fast-check": "^3.22.0",
         "ioredis": "^5.4.1",
         "kafkajs": "^2.2.4",
         "mobilewright": "^0.0.35",
@@ -23,20 +54,46 @@
         "otplib": "^13.4.0",
         "pg": "^8.13.0"
     },
+    "peerDependencies": {
+        "@playwright/test": ">=1.50.0"
+    },
     "devDependencies": {
+        "@playwright/test": "^1.60.0",
         "@types/better-sqlite3": "^7.6.0",
         "@types/mssql": "^12.3.0",
         "@types/node": "^22.0.0",
         "@types/pg": "^8.11.0",
+        "fast-check": "^3.22.0",
         "tsx": "^4.19.0",
         "typescript": "^5.6.0"
     },
     "keywords": [
         "playwright",
+        "playwright-test",
+        "fixtures",
         "testing",
         "api",
+        "openapi",
+        "database",
+        "kafka",
+        "redis",
+        "mobile",
+        "otp",
         "integration",
-        "fixtures"
+        "extension",
+        "stagehand"
     ],
-    "license": "MIT"
+    "author": "Inluxc",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Inluxc/stagehand.git"
+    },
+    "homepage": "https://github.com/Inluxc/stagehand#readme",
+    "bugs": {
+        "url": "https://github.com/Inluxc/stagehand/issues"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
 }

@@ -1,0 +1,22 @@
+# Source (dist is published instead)
+src/
+tests/
+docs/
+
+# Config
+.env*
+.github/
+.kiro/
+playwright.config.ts
+tsconfig.json
+tsconfig.build.json
+
+# Dev artifacts
+node_modules/
+playwright-report/
+test-results/
+*.tgz
+
+# Misc
+AGENTS.md
+SKILLS.md
