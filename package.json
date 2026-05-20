@@ -2,6 +2,10 @@
     "name": "@inluxc/stagehand",
     "version": "1.0.0",
     "description": "Extensible fixture toolkit for Playwright Test — adds OpenAPI, database, Kafka, Redis, mobile, and OTP fixtures on top of @playwright/test",
+    "type": "module",
+    "bin": {
+        "stagehand": "dist/src/cli/init.js"
+    },
     "main": "./dist/src/index.js",
     "module": "./dist/src/index.js",
     "types": "./dist/src/index.d.ts",
@@ -26,6 +30,10 @@
         "./errors": {
             "types": "./dist/src/errors.d.ts",
             "import": "./dist/src/errors.js"
+        },
+        "./cli": {
+            "types": "./dist/src/cli/init.d.ts",
+            "import": "./dist/src/cli/init.js"
         }
     },
     "files": [
@@ -36,7 +44,11 @@
     ],
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
+        "clean": "rm -rf dist",
+        "prebuild": "npm run clean",
         "prepublishOnly": "npm run build",
+        "release": "npm run build && npm publish --access public",
+        "release:dry": "npm run build && npm publish --dry-run --access public",
         "test": "npx playwright test",
         "test:tag": "npx playwright test --grep",
         "typecheck": "tsc --noEmit"
@@ -87,7 +99,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/Inluxc/stagehand.git"
+        "url": "git+https://github.com/Inluxc/stagehand.git"
     },
     "homepage": "https://github.com/Inluxc/stagehand#readme",
     "bugs": {
