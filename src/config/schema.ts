@@ -106,6 +106,24 @@ export interface MobilewrightFixtureConfig {
 }
 
 /**
+ * Configuration for the OTP (One-Time Password) fixture.
+ */
+export interface OtpFixtureConfig {
+    /** Base32-encoded secret key for TOTP/HOTP generation. */
+    secret?: string;
+    /** Number of digits in the generated token (default: 6). */
+    digits?: number;
+    /** Time step period in seconds for TOTP (default: 30). */
+    period?: number;
+    /** Verification window — number of periods to check before/after current (default: 1). */
+    window?: number;
+    /** Hash algorithm (default: 'sha1'). */
+    algorithm?: 'sha1' | 'sha256' | 'sha512';
+    /** Issuer name for otpauth:// URI generation. */
+    issuer?: string;
+}
+
+/**
  * Configuration for the secrets provider.
  */
 export interface SecretsConfig {
@@ -135,6 +153,8 @@ export interface FrameworkConfig {
     redis?: RedisFixtureConfig;
     /** Mobilewright fixture configuration. */
     mobilewright?: MobilewrightFixtureConfig;
+    /** OTP fixture configuration. */
+    otp?: OtpFixtureConfig;
     /** Secrets provider configuration. */
     secrets?: SecretsConfig;
 }

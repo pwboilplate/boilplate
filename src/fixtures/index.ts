@@ -27,12 +27,14 @@ import type {
     KafkaFixtureConfig,
     RedisFixtureConfig,
     MobilewrightFixtureConfig,
+    OtpFixtureConfig,
 } from '../config/schema';
 import { openApiFixture, type OpenApiClient } from './openapi.fixture';
 import { databaseFixture, type DatabaseClient } from './database.fixture';
 import { kafkaFixture, type KafkaClient } from './kafka.fixture';
 import { redisFixture, type RedisClient } from './redis.fixture';
 import { mobilewrightFixture, type MobilewrightScreen, type MobilewrightDevice } from './mobilewright.fixture';
+import { otpFixture, type OtpClient } from './otp.fixture';
 
 /**
  * Configuration options that can be passed via project `use` block.
@@ -45,6 +47,7 @@ export interface ConfigOptions {
     kafka: KafkaFixtureConfig | undefined;
     redis: RedisFixtureConfig | undefined;
     mobilewright: MobilewrightFixtureConfig | undefined;
+    otp: OtpFixtureConfig | undefined;
 }
 
 /**
@@ -59,6 +62,8 @@ export interface FixtureTypes {
     redisClient: RedisClient;
     mobilewrightDevice: MobilewrightDevice;
     mobilewrightScreen: MobilewrightScreen;
+    otpConfig: OtpFixtureConfig;
+    otpClient: OtpClient;
 }
 
 /**
@@ -74,6 +79,7 @@ const configOptionFixtures = {
     kafka: [undefined as KafkaFixtureConfig | undefined, { option: true }],
     redis: [undefined as RedisFixtureConfig | undefined, { option: true }],
     mobilewright: [undefined as MobilewrightFixtureConfig | undefined, { option: true }],
+    otp: [undefined as OtpFixtureConfig | undefined, { option: true }],
 };
 
 /**
@@ -107,6 +113,30 @@ const redisConfigFixture = {
 };
 
 /**
+ * The otpConfig fixture loads OTP configuration from the project config option
+ * or falls back to ConfigLoader.
+ */
+const otpConfigFixture = {
+    otpConfig: async (
+        { otp }: { otp: OtpFixtureConfig | undefined },
+        use: (config: OtpFixtureConfig) => Promise<void>,
+    ) => {
+        if (otp) {
+            await use(otp);
+            return;
+        }
+
+        // Fallback: load from ConfigLoader
+        const { ConfigLoader } = await import('../config/loader');
+        const loader = new ConfigLoader();
+        const frameworkConfig = loader.load();
+
+        // OTP config is optional — use empty config (no default secret) if not provided
+        await use(frameworkConfig.otp ?? {});
+    },
+};
+
+/**
  * All fixture definitions combined into a single object.
  *
  * Fixtures declare dependencies by listing other fixture names as parameters,
@@ -130,6 +160,8 @@ const allFixtures = {
     ...redisConfigFixture,
     ...redisFixture,
     ...mobilewrightFixture,
+    ...otpConfigFixture,
+    ...otpFixture,
 };
 
 /**
@@ -145,3 +177,4 @@ export type { DatabaseClient } from './database.fixture';
 export type { KafkaClient } from './kafka.fixture';
 export type { RedisClient } from './redis.fixture';
 export type { MobilewrightScreen, MobilewrightDevice } from './mobilewright.fixture';
+export type { OtpClient } from './otp.fixture';

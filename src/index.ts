@@ -22,6 +22,7 @@ export type {
     RedisClient,
     MobilewrightScreen,
     MobilewrightDevice,
+    OtpClient,
     FixtureTypes,
     ConfigOptions,
 } from './fixtures';
@@ -34,6 +35,7 @@ export type {
     KafkaFixtureConfig,
     RedisFixtureConfig,
     MobilewrightFixtureConfig,
+    OtpFixtureConfig,
     SecretsConfig,
     EnvironmentsFile,
 } from './config';
