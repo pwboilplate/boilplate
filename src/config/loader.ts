@@ -315,6 +315,18 @@ export class ConfigLoader {
                 if (!cfg.mobilewright) cfg.mobilewright = { platform: 'ios', bundleId: '', deviceName: '', appPath: '' };
                 cfg.mobilewright.appPath = val;
             },
+            'PW_GRAPHQL_ENDPOINT': (cfg, val) => {
+                if (!cfg.graphql) cfg.graphql = { endpoint: '' };
+                cfg.graphql.endpoint = val;
+            },
+            'PW_GRAPHQL_AUTH_TOKEN': (cfg, val) => {
+                if (!cfg.graphql) cfg.graphql = { endpoint: '' };
+                cfg.graphql.authToken = val;
+            },
+            'PW_GRAPHQL_REQUEST_TIMEOUT': (cfg, val) => {
+                if (!cfg.graphql) cfg.graphql = { endpoint: '' };
+                cfg.graphql.requestTimeout = parseInt(val, 10);
+            },
         };
 
         for (const [key, value] of Object.entries(values)) {

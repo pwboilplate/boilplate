@@ -130,6 +130,20 @@ export interface MongoDbFixtureConfig {
 }
 
 /**
+ * Configuration for the GraphQL client fixture.
+ */
+export interface GraphQLFixtureConfig {
+    /** GraphQL endpoint URL. */
+    endpoint: string;
+    /** Default headers to include with every request. */
+    headers?: Record<string, string>;
+    /** Bearer token for authorization (sets Authorization header). */
+    authToken?: string;
+    /** Request timeout in ms (default: 30000). */
+    requestTimeout?: number;
+}
+
+/**
  * Configuration for the OTP (One-Time Password) fixture.
  */
 export interface OtpFixtureConfig {
@@ -181,6 +195,8 @@ export interface FrameworkConfig {
     mobilewright?: MobilewrightFixtureConfig;
     /** OTP fixture configuration. */
     otp?: OtpFixtureConfig;
+    /** GraphQL client fixture configuration. */
+    graphql?: GraphQLFixtureConfig;
     /** Secrets provider configuration. */
     secrets?: SecretsConfig;
 }

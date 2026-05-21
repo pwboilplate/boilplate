@@ -57,6 +57,8 @@
         "@mobilewright/test": "^0.0.35",
         "better-sqlite3": "^11.6.0",
         "dotenv": "^16.4.5",
+        "graphql": "^16.14.0",
+        "graphql-request": "^7.4.0",
         "ioredis": "^5.4.1",
         "kafkajs": "^2.2.4",
         "mobilewright": "^0.0.35",

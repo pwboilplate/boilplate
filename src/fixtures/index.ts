@@ -29,6 +29,7 @@ import type {
     MongoDbFixtureConfig,
     MobilewrightFixtureConfig,
     OtpFixtureConfig,
+    GraphQLFixtureConfig,
 } from '../config/schema';
 import { openApiFixture, type OpenApiClient } from './openapi.fixture';
 import { databaseFixture, type DatabaseClient } from './database.fixture';
@@ -37,6 +38,7 @@ import { redisFixture, type RedisClient } from './redis.fixture';
 import { mobilewrightFixture, type MobilewrightScreen, type MobilewrightDevice } from './mobilewright.fixture';
 import { mongoDbFixture, type MongoDbClient } from './mongodb.fixture';
 import { otpFixture, type OtpClient } from './otp.fixture';
+import { graphqlFixture, type GraphQLClient } from './graphql.fixture';
 
 /**
  * Configuration options that can be passed via project `use` block.
@@ -51,6 +53,7 @@ export interface ConfigOptions {
     mongodb: MongoDbFixtureConfig | undefined;
     mobilewright: MobilewrightFixtureConfig | undefined;
     otp: OtpFixtureConfig | undefined;
+    graphql: GraphQLFixtureConfig | undefined;
 }
 
 /**
@@ -68,6 +71,7 @@ export interface FixtureTypes {
     mobilewrightScreen: MobilewrightScreen;
     otpConfig: OtpFixtureConfig;
     otpClient: OtpClient;
+    graphqlClient: GraphQLClient;
 }
 
 /**
@@ -85,6 +89,7 @@ const configOptionFixtures = {
     mongodb: [undefined as MongoDbFixtureConfig | undefined, { option: true }],
     mobilewright: [undefined as MobilewrightFixtureConfig | undefined, { option: true }],
     otp: [undefined as OtpFixtureConfig | undefined, { option: true }],
+    graphql: [undefined as GraphQLFixtureConfig | undefined, { option: true }],
 };
 
 /**
@@ -168,6 +173,7 @@ const allFixtures = {
     ...mobilewrightFixture,
     ...otpConfigFixture,
     ...otpFixture,
+    ...graphqlFixture,
 };
 
 /**
@@ -185,3 +191,4 @@ export type { RedisClient } from './redis.fixture';
 export type { MongoDbClient } from './mongodb.fixture';
 export type { MobilewrightScreen, MobilewrightDevice } from './mobilewright.fixture';
 export type { OtpClient } from './otp.fixture';
+export type { GraphQLClient } from './graphql.fixture';

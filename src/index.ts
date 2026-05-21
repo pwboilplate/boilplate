@@ -24,6 +24,7 @@ export type {
     MobilewrightScreen,
     MobilewrightDevice,
     OtpClient,
+    GraphQLClient,
     FixtureTypes,
     ConfigOptions,
 } from './fixtures';
@@ -38,6 +39,7 @@ export type {
     RedisFixtureConfig,
     MobilewrightFixtureConfig,
     OtpFixtureConfig,
+    GraphQLFixtureConfig,
     SecretsConfig,
     EnvironmentsFile,
 } from './config';
