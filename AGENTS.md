@@ -16,6 +16,8 @@ A reusable Playwright test framework with an extensible fixture architecture for
 - **Database:** PostgreSQL (`pg`), MySQL (`mysql2`), MSSQL (`mssql`), SQLite (`better-sqlite3`)
 - **Messaging:** KafkaJS (`kafkajs ^2.2.4`)
 - **Cache:** ioredis (`ioredis ^5.4.1`)
+- **MongoDB:** mongodb (`mongodb ^6.x`)
+- **GraphQL:** graphql-request (`graphql-request ^6.x`)
 - **OTP/2FA:** otplib (`otplib ^13.4.0`)
 - **Property Testing:** fast-check (`fast-check ^3.22.0`)
 - **Env Loading:** dotenv (`dotenv ^16.4.5`)
@@ -35,7 +37,9 @@ src/
 │   ├── index.ts                # Fixture registry — composes all fixtures via test.extend()
 │   ├── openapi.fixture.ts      # OpenAPI client fixture
 │   ├── database.fixture.ts     # Database client fixture (pg/mysql/sqlite)
+│   ├── graphql.fixture.ts      # GraphQL client fixture (queries, mutations, rawRequest)
 │   ├── kafka.fixture.ts        # Kafka producer/consumer fixture
+│   ├── mongodb.fixture.ts      # MongoDB client fixture (CRUD + aggregation)
 │   ├── redis.fixture.ts        # Redis client fixture
 │   ├── otp.fixture.ts          # OTP (TOTP/HOTP) fixture for 2FA/MFA testing
 │   └── mobilewright.fixture.ts # Mobile testing fixture
@@ -50,7 +54,9 @@ tests/
 ├── examples/                   # Reference test files for each fixture
 │   ├── openapi.spec.ts
 │   ├── database.spec.ts
+│   ├── graphql.spec.ts
 │   ├── kafka.spec.ts
+│   ├── mongodb.spec.ts
 │   ├── redis.spec.ts
 │   ├── otp.spec.ts
 │   └── mobilewright.spec.ts
@@ -77,7 +83,9 @@ import { test, expect } from '../../src/fixtures';
 | Project | Pattern | Location |
 |---------|---------|----------|
 | OpenAPI | `*.spec.ts` | `tests/examples/` or custom dir |
+| GraphQL | `*.spec.ts` | `tests/examples/` or custom dir |
 | Database | `*.spec.ts` | `tests/examples/` or custom dir |
+| MongoDB | `*.spec.ts` | `tests/examples/` or custom dir |
 | Kafka | `*.spec.ts` | `tests/examples/` or custom dir |
 | Redis | `*.spec.ts` | `tests/examples/` or custom dir |
 | Mobile | `*.spec.ts` | `tests/examples/` or custom dir |
@@ -91,7 +99,9 @@ Request fixtures by name in the test function signature:
 | Fixture Name | Type | Description |
 |---|---|---|
 | `openApiClient` | `OpenApiClient` | Typed HTTP client from OpenAPI spec (`{ client, api }`) |
+| `graphqlClient` | `GraphQLClient` | GraphQL client with `query`, `mutate`, `rawRequest`, `setAuthToken` |
 | `databaseClient` | `DatabaseClient` | DB client with `query<T>(sql, params?)` and `execute(sql, params?)` |
+| `mongoDbClient` | `MongoDbClient` | MongoDB with `find`, `findOne`, `insertOne`, `insertMany`, `updateOne`, `updateMany`, `deleteOne`, `deleteMany`, `aggregate` |
 | `kafkaClient` | `KafkaClient` | Kafka with `produce(topic, messages)` and `consume(topic, options?)` |
 | `redisClient` | `RedisClient` | Redis with `get`, `set`, `del`, `publish`, `subscribe` |
 | `otpClient` | `OtpClient` | OTP with `generateTotp`, `verifyTotp`, `generateHotp`, `verifyHotp`, `generateSecret`, `generateKeyUri` |
