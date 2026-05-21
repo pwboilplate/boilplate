@@ -167,6 +167,63 @@ await mobilewrightScreen.fill(mobilewrightScreen.getByLabel('Email'), 'a@b.com')
 await mobilewrightScreen.swipe('down');
 ```
 
+**MongoDB Client:**
+```typescript
+// Find documents with options (limit, skip, sort, projection)
+const users = await mongoDbClient.find<{ name: string }>('users', { active: true }, { limit: 10, sort: { name: 1 } });
+
+// Find a single document (returns T | null)
+const user = await mongoDbClient.findOne<{ name: string }>('users', { email: 'a@b.com' });
+
+// Insert one — returns { insertedId, acknowledged }
+const result = await mongoDbClient.insertOne('users', { name: 'Alice', active: true });
+
+// Insert many — returns { insertedIds, insertedCount, acknowledged }
+await mongoDbClient.insertMany('users', [{ name: 'A' }, { name: 'B' }]);
+
+// Update — returns { matchedCount, modifiedCount, upsertedId, acknowledged }
+await mongoDbClient.updateOne('users', { name: 'Alice' }, { $set: { active: false } });
+await mongoDbClient.updateMany('users', { active: false }, { $set: { archived: true } });
+
+// Delete — returns { deletedCount, acknowledged }
+await mongoDbClient.deleteOne('users', { name: 'Alice' });
+await mongoDbClient.deleteMany('users', { archived: true });
+
+// Aggregation pipeline
+const stats = await mongoDbClient.aggregate<{ _id: boolean; count: number }>(
+    'users', [{ $group: { _id: '$active', count: { $sum: 1 } } }]
+);
+```
+
+**GraphQL Client:**
+```typescript
+// Query — returns typed data directly
+const data = await graphqlClient.query<{ users: Array<{ id: string; name: string }> }>(`
+    query { users { id name } }
+`);
+
+// Query with variables
+const user = await graphqlClient.query<{ user: { id: string } }>(
+    `query GetUser($id: ID!) { user(id: $id) { id name } }`,
+    { id: '123' }
+);
+
+// Mutation
+const created = await graphqlClient.mutate<{ createUser: { id: string } }>(
+    `mutation CreateUser($input: CreateUserInput!) { createUser(input: $input) { id } }`,
+    { input: { name: 'Alice', email: 'alice@example.com' } }
+);
+
+// Raw request — returns { data, errors } (useful for testing error scenarios)
+const response = await graphqlClient.rawRequest<{ user: null }>(`{ user(id: "bad") { id } }`);
+expect(response.errors).toBeDefined();
+
+// Dynamic auth and headers
+graphqlClient.setAuthToken('bearer-token');
+graphqlClient.setHeader('X-Custom', 'value');
+await graphqlClient.query(`{ me { email } }`, undefined, { headers: { 'X-Request-ID': '123' } });
+```
+
 **OTP Client:**
 ```typescript
 // Generate a new base32 secret
@@ -208,6 +265,11 @@ Set active environment: `PW_ENVIRONMENT=dev`
 | `PW_KAFKA_BROKERS` | Comma-separated broker list |
 | `PW_REDIS_HOST`, `PW_REDIS_PORT`, `PW_REDIS_PASSWORD` | Redis connection |
 | `PW_REDIS_KEY_PREFIX` | Test key prefix for isolation |
+| `PW_MONGODB_URI` | Full MongoDB connection URI (overrides host/port) |
+| `PW_MONGODB_HOST`, `PW_MONGODB_PORT`, `PW_MONGODB_DATABASE` | MongoDB connection |
+| `PW_MONGODB_USERNAME`, `PW_MONGODB_PASSWORD` | MongoDB credentials |
+| `PW_GRAPHQL_ENDPOINT` | GraphQL endpoint URL |
+| `PW_GRAPHQL_AUTH_TOKEN` | Bearer token for GraphQL authorization |
 | `PW_MOBILE_PLATFORM` | `ios` or `android` |
 | `PW_MOBILE_BUNDLE_ID`, `PW_MOBILE_DEVICE_NAME`, `PW_MOBILE_APP_PATH` | Mobile config |
 | `PW_OTP_SECRET` | Base32-encoded OTP secret |
@@ -228,7 +290,11 @@ Tests are matched to projects via `testMatch` patterns in `playwright.config.ts`
 | `browser-chromium` | `**/examples/browser.spec.ts` | Standard Playwright `page` |
 | `browser-firefox` | `**/examples/browser.spec.ts` | Standard Playwright `page` |
 | `browser-webkit` | `**/examples/browser.spec.ts` | Standard Playwright `page` |
-| `api-integration` | `**/examples/{database,kafka,redis}.spec.ts` | `databaseClient`, `kafkaClient`, `redisClient` |
+| `api-integration` | `**/examples/{database,kafka,redis,mongodb}.spec.ts` | `databaseClient`, `kafkaClient`, `redisClient`, `mongoDbClient` |
+| `integration-database` | `**/examples/database.spec.ts` | `databaseClient` |
+| `integration-kafka` | `**/examples/kafka.spec.ts` | `kafkaClient` |
+| `integration-redis` | `**/examples/redis.spec.ts` | `redisClient` |
+| `integration-mongodb` | `**/examples/mongodb.spec.ts` | `mongoDbClient` |
 | `property-tests` | `**/*.prop.ts` | None (uses fast-check) |
 
 ## Error Handling

@@ -719,7 +719,266 @@ test.describe('Mobile — [Screen/Flow Name]', () => {
 
 ---
 
-## Skill 6: Create a Browser Test
+## Skill 6: Create a MongoDB Test
+
+**When to use:** Testing document-based data operations, NoSQL queries, and aggregation pipelines.
+
+**Steps:**
+
+1. Create a file matching `**/examples/mongodb.spec.ts` or update `testMatch`
+2. Use the `mongoDbClient` fixture
+3. Use MongoDB query operators (`$set`, `$group`, etc.) for updates and aggregations
+
+**Template:**
+
+```typescript
+import { test, expect } from '../../src';
+
+test.describe('MongoDB — [Collection/Feature Name]', () => {
+    test('find documents with filter and options', async ({ mongoDbClient }) => {
+        const users = await mongoDbClient.find<{ name: string; email: string; active: boolean }>(
+            'users',
+            { active: true },
+            { limit: 10, sort: { name: 1 }, projection: { name: 1, email: 1 } }
+        );
+
+        expect(users).toBeDefined();
+        expect(Array.isArray(users)).toBe(true);
+
+        for (const user of users) {
+            expect(user).toHaveProperty('name');
+            expect(user).toHaveProperty('email');
+        }
+    });
+
+    test('find a single document', async ({ mongoDbClient }) => {
+        const user = await mongoDbClient.findOne<{ name: string; email: string }>(
+            'users',
+            { email: 'admin@example.com' }
+        );
+
+        // findOne returns null if no document matches
+        if (user) {
+            expect(user).toHaveProperty('name');
+        } else {
+            expect(user).toBeNull();
+        }
+    });
+
+    test('insert a single document', async ({ mongoDbClient }) => {
+        const result = await mongoDbClient.insertOne('users', {
+            name: 'Test User',
+            email: 'test@example.com',
+            active: true,
+            createdAt: new Date().toISOString(),
+        });
+
+        expect(result.acknowledged).toBe(true);
+        expect(result.insertedId).toBeDefined();
+    });
+
+    test('insert multiple documents', async ({ mongoDbClient }) => {
+        const result = await mongoDbClient.insertMany('users', [
+            { name: 'User A', email: 'a@example.com', active: true },
+            { name: 'User B', email: 'b@example.com', active: false },
+        ]);
+
+        expect(result.acknowledged).toBe(true);
+        expect(result.insertedCount).toBe(2);
+    });
+
+    test('update a document', async ({ mongoDbClient }) => {
+        const result = await mongoDbClient.updateOne(
+            'users',
+            { email: 'test@example.com' },
+            { $set: { active: false, updatedAt: new Date().toISOString() } }
+        );
+
+        expect(result.acknowledged).toBe(true);
+        expect(result.matchedCount).toBeGreaterThanOrEqual(0);
+    });
+
+    test('update multiple documents', async ({ mongoDbClient }) => {
+        const result = await mongoDbClient.updateMany(
+            'users',
+            { active: false },
+            { $set: { archived: true } }
+        );
+
+        expect(result.acknowledged).toBe(true);
+        expect(result.modifiedCount).toBeGreaterThanOrEqual(0);
+    });
+
+    test('delete a document', async ({ mongoDbClient }) => {
+        const result = await mongoDbClient.deleteOne('users', {
+            email: 'test@example.com',
+        });
+
+        expect(result.acknowledged).toBe(true);
+        expect(result.deletedCount).toBeGreaterThanOrEqual(0);
+    });
+
+    test('run an aggregation pipeline', async ({ mongoDbClient }) => {
+        const results = await mongoDbClient.aggregate<{ _id: boolean; count: number }>(
+            'users',
+            [
+                { $group: { _id: '$active', count: { $sum: 1 } } },
+                { $sort: { count: -1 } },
+            ]
+        );
+
+        expect(results).toBeDefined();
+        expect(Array.isArray(results)).toBe(true);
+
+        if (results.length > 0) {
+            expect(results[0]).toHaveProperty('_id');
+            expect(results[0]).toHaveProperty('count');
+        }
+    });
+
+    test('empty result returns empty array', async ({ mongoDbClient }) => {
+        const docs = await mongoDbClient.find('users', { email: 'nonexistent@nowhere.com' });
+        expect(docs).toEqual([]);
+    });
+});
+```
+
+**Key points:**
+- `find<T>(collection, filter?, options?)` returns `T[]` — empty array if no matches
+- `findOne<T>(collection, filter?)` returns `T | null`
+- `insertOne()` returns `{ insertedId, acknowledged }`
+- `insertMany()` returns `{ insertedIds, insertedCount, acknowledged }`
+- `updateOne()` / `updateMany()` returns `{ matchedCount, modifiedCount, upsertedId, acknowledged }`
+- `deleteOne()` / `deleteMany()` returns `{ deletedCount, acknowledged }`
+- `aggregate<T>(collection, pipeline, options?)` returns `T[]`
+- Find options: `limit`, `skip`, `sort` (1 asc / -1 desc), `projection` (1 include / 0 exclude)
+- Use MongoDB update operators (`$set`, `$unset`, `$inc`, `$push`, etc.)
+
+---
+
+## Skill 7: Create a GraphQL Test
+
+**When to use:** Testing GraphQL APIs — queries, mutations, error handling, and authentication flows.
+
+**Steps:**
+
+1. Create a file matching your project's `testMatch` pattern (e.g., `tests/examples/graphql.spec.ts`)
+2. Use the `graphqlClient` fixture
+3. Use `query()` for reads, `mutate()` for writes, `rawRequest()` for error inspection
+
+**Template:**
+
+```typescript
+import { test, expect } from '../../src';
+
+test.describe('GraphQL — [Feature Name]', () => {
+    test('execute a query', async ({ graphqlClient }) => {
+        const data = await graphqlClient.query<{
+            users: Array<{ id: string; name: string; email: string }>;
+        }>(`
+            query {
+                users {
+                    id
+                    name
+                    email
+                }
+            }
+        `);
+
+        expect(data.users).toBeInstanceOf(Array);
+        expect(data.users[0]).toHaveProperty('name');
+    });
+
+    test('query with variables', async ({ graphqlClient }) => {
+        const data = await graphqlClient.query<{
+            user: { id: string; name: string } | null;
+        }>(
+            `query GetUser($id: ID!) {
+                user(id: $id) {
+                    id
+                    name
+                }
+            }`,
+            { id: '123' }
+        );
+
+        expect(data.user).not.toBeNull();
+        expect(data.user!.name).toBeDefined();
+    });
+
+    test('execute a mutation', async ({ graphqlClient }) => {
+        const data = await graphqlClient.mutate<{
+            createUser: { id: string; name: string };
+        }>(
+            `mutation CreateUser($input: CreateUserInput!) {
+                createUser(input: $input) {
+                    id
+                    name
+                }
+            }`,
+            { input: { name: 'Alice', email: 'alice@example.com' } }
+        );
+
+        expect(data.createUser.id).toBeDefined();
+        expect(data.createUser.name).toBe('Alice');
+    });
+
+    test('handle errors with rawRequest', async ({ graphqlClient }) => {
+        const response = await graphqlClient.rawRequest<{ user: null }>(
+            `{ user(id: "nonexistent") { id name } }`
+        );
+
+        // rawRequest returns errors in the response instead of throwing
+        if (response.errors) {
+            expect(response.errors[0].message).toBeDefined();
+            expect(response.errors[0]).toHaveProperty('locations');
+        }
+    });
+
+    test('authenticated request with dynamic token', async ({ graphqlClient }) => {
+        // Set token dynamically (e.g., after a login mutation)
+        graphqlClient.setAuthToken('jwt-token-from-login');
+
+        const data = await graphqlClient.query<{ me: { email: string } }>(`
+            query { me { email } }
+        `);
+
+        expect(data.me.email).toBeDefined();
+    });
+
+    test('request with custom headers', async ({ graphqlClient }) => {
+        const data = await graphqlClient.query(
+            `{ __schema { queryType { name } } }`,
+            undefined,
+            { headers: { 'X-Request-ID': 'test-correlation-123' } }
+        );
+
+        expect(data).toBeDefined();
+    });
+
+    test('introspection query works', async ({ graphqlClient }) => {
+        const data = await graphqlClient.query<{
+            __schema: { queryType: { name: string } };
+        }>(`{ __schema { queryType { name } } }`);
+
+        expect(data.__schema.queryType.name).toBe('Query');
+    });
+});
+```
+
+**Key points:**
+- `query<T>(document, variables?, options?)` — executes a query, returns typed data directly
+- `mutate<T>(document, variables?, options?)` — executes a mutation, same return pattern
+- `rawRequest<T>(document, variables?, options?)` — returns `{ data, errors }` (does not throw on GraphQL errors)
+- `setAuthToken(token)` — sets `Authorization: Bearer <token>` for all subsequent requests
+- `setHeader(key, value)` — sets a default header for all subsequent requests
+- Per-request options: `headers`, `operationName`, `signal` (AbortSignal)
+- Use `rawRequest()` when testing error scenarios — it returns errors in the response object
+- The client is HTTP-based (stateless) — no connection teardown needed
+
+---
+
+## Skill 8: Create a Browser Test
 
 **When to use:** Testing web UI in Chromium, Firefox, or WebKit.
 
@@ -1348,7 +1607,7 @@ test.describe('Browser — [Page/Feature Name] — Visual Regression', () => {
 
 ---
 
-## Skill 7: Create a Property-Based Test
+## Skill 9: Create a Property-Based Test
 
 **When to use:** Testing invariants that should hold for any valid input (config parsing, data transformations, validation logic).
 
@@ -1408,7 +1667,7 @@ test.describe('Property — [Invariant Name]', () => {
 
 ---
 
-## Skill 8: Create a Custom Fixture
+## Skill 10: Create a Custom Fixture
 
 **When to use:** Adding a new integration (S3, Elasticsearch, gRPC, etc.) to the framework.
 
@@ -1492,7 +1751,7 @@ const allFixtures = {
 
 ---
 
-## Skill 9: Add Configuration for a New Environment
+## Skill 11: Add Configuration for a New Environment
 
 **When to use:** Setting up a new target environment (e.g., `qa`, `perf`).
 
@@ -1544,7 +1803,7 @@ const allFixtures = {
 
 ---
 
-## Skill 10: Add a New Playwright Project
+## Skill 12: Add a New Playwright Project
 
 **When to use:** Creating a new test suite with its own configuration and test matching.
 
@@ -1570,7 +1829,7 @@ const allFixtures = {
 
 ---
 
-## Skill 11: Handle Test Data Setup and Cleanup
+## Skill 13: Handle Test Data Setup and Cleanup
 
 **When to use:** Tests that need specific data state before running.
 
@@ -1610,7 +1869,7 @@ test.describe('Orders API', () => {
 
 ---
 
-## Skill 12: Tag and Filter Tests
+## Skill 14: Tag and Filter Tests
 
 **When to use:** Organizing tests by category (smoke, regression, critical).
 
@@ -1643,7 +1902,7 @@ npx playwright test --grep-invert @slow  # exclude slow tests
 
 ---
 
-## Skill 13: Combine Multiple Fixtures in One Test
+## Skill 15: Combine Multiple Fixtures in One Test
 
 **When to use:** Integration tests that span multiple systems.
 
@@ -1690,7 +1949,7 @@ test.describe('Integration — End-to-End Order Flow', () => {
 
 ---
 
-## Skill 14: Create an OTP/2FA Test
+## Skill 16: Create an OTP/2FA Test
 
 **When to use:** Testing two-factor authentication (2FA) or multi-factor authentication (MFA) flows that require TOTP or HOTP token generation/verification.
 
